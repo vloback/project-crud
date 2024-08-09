@@ -63,9 +63,9 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = "https://localhost:7223",
-        ValidAudience = "https://localhost:7223",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("MySuperSecretKeyForJwt12345!@#$%"))
+        ValidIssuer = "Inserir_Url_Aqui",
+        ValidAudience = "Inserir_Url_Aqui",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Sua_Senha_Aqui"))
     };
 });
 
@@ -90,7 +90,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Configuração das Rotas
+// ConfiguraÃ§Ã£o das Rotas
 app.AddRouteAuth();
 
 app.AddRoutesPessoas();
