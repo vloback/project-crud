@@ -143,3 +143,4 @@ C:\Projetos\Montreal\obj\Debug\net8.0\refint\Montreal.dll
 C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.pdb
 C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.genruntimeconfig.cache
 C:\Projetos\Montreal\obj\Debug\net8.0\ref\Montreal.dll
+C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.sourcelink.json
