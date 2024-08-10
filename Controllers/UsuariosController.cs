@@ -49,7 +49,7 @@ namespace Montreal.Controllers
                 .Select(usuario => new UsuarioDto(usuario.Id, usuario.NomeUsuario, usuario.Role))
                 .ToListAsync(ct);
                 return usuarios;
-            }).RequireAuthorization("UsarioPolicy");
+            }).RequireAuthorization("UsuarioPolicy");
 
             // Atualiza um usuário
             rotasUsuarios.MapPut(pattern: "{id}", handler: async (Guid id, UpdateUsuarioRequest request, AppDbContext context, CancellationToken ct) =>
