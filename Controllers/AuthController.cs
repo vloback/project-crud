@@ -29,7 +29,7 @@ namespace Montreal.Controllers
                     return Results.Conflict(error: "Usuário ou senha inválidos.");
 
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes("Sua_Senha_Aqui");
+                var key = Encoding.ASCII.GetBytes("MySuperSecretKeyForJwt12345!@#$%");
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(new Claim[]
@@ -38,8 +38,8 @@ namespace Montreal.Controllers
                         new Claim(ClaimTypes.Role, usuario.Role)
                     }),
                     Expires = DateTime.UtcNow.AddHours(1),
-                    Audience = "Inserir_Url_Aqui",
-                    Issuer = "Inserir_Url_Aqui",
+                    Audience = "https://localhost:7223/",
+                    Issuer = "https://localhost:7223/",
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
                 };
                 var token = tokenHandler.CreateToken(tokenDescriptor);
