@@ -48,6 +48,7 @@ builder.Services.AddSwaggerGen(c =>
 
 
 builder.Services.AddValidatorsFromAssemblyContaining<PessoaValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UsuarioValidator>();
 builder.Services.AddScoped<AppDbContext>();
 
 builder.Services.AddAuthentication(options =>
@@ -76,6 +77,18 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+//Para personalizar respostas 403 Forbidden
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Response.StatusCode == StatusCodes.Status403Forbidden)
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("{\"message\": \"Você não tem permissão para realizar esta ação.\"}");
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
