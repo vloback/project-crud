@@ -7,6 +7,7 @@ using Montreal.Entities;
 using Montreal.Entities.Dto;
 using Montreal.Requests.Pessoas;
 using Montreal.Requests.Usuarios;
+using System.ComponentModel.DataAnnotations;
 
 namespace Montreal.Controllers
 {
@@ -17,7 +18,7 @@ namespace Montreal.Controllers
             var rotasUsuarios = app.MapGroup(prefix: "usuarios").WithTags("Usuarios");
 
             //Adiciona um novo usuario
-            
+
             rotasUsuarios.MapPost(pattern: "", handler: async (AddUsuarioRequest request, AppDbContext context, CancellationToken ct, [FromServices] IValidator<Usuario> validator) =>
             {
                 var jaExiste = await context.Usuarios.AnyAsync(usuario => usuario.NomeUsuario == request.NomeUsuario, ct);
@@ -52,7 +53,7 @@ namespace Montreal.Controllers
             }).RequireAuthorization("UsuarioPolicy");
 
             // Atualiza um usuário
-            rotasUsuarios.MapPut(pattern: "{id}", handler: async (Guid id, UpdateUsuarioRequest request, AppDbContext context, CancellationToken ct) =>
+            rotasUsuarios.MapPut(pattern: "{id}", handler: async (Guid id, UpdateUsuarioRequest request, AppDbContext context, CancellationToken ct, [FromServices] IValidator<Usuario> validator) =>
             {
                 var usuario = await context.Usuarios.SingleOrDefaultAsync(usuario => usuario.Id == id, ct);
 
@@ -60,6 +61,15 @@ namespace Montreal.Controllers
                     return Results.NotFound();
 
                 usuario.AtualizarUsuario(request.NomeUsuario, request.Senha, request.Role);
+
+                var result = validator.Validate(usuario);
+
+                var error = result.Errors.Select(e => e.ErrorMessage);
+
+                if (!result.IsValid)
+                {
+                    return Results.Conflict(error);
+                }
 
                 await context.SaveChangesAsync(ct);
                 return Results.Ok("Usuário atualizado com sucesso!");

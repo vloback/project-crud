@@ -25,7 +25,7 @@ namespace Montreal.Validators
 
             RuleFor(c => c.DataNascimento)
                 .NotEmpty()
-                .Must(dataNascimento => dataNascimento > new DateTime(1900, 1, 1) && dataNascimento < DateTime.Now)
+                .Must(dataNascimento => dataNascimento > new DateOnly(1900, 1, 1) && dataNascimento < DateOnly.FromDateTime(DateTime.Now))
                 .WithMessage("Por favor, informar uma data válida.");
 
             RuleFor(c => c.Sexo)

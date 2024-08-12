@@ -53,7 +53,7 @@ namespace Montreal.Controllers
                     }
                 }
 
-                var novaPessoa = new Pessoa(request.Nome, request.Sobrenome, request.CPF, request.DataNascimento, request.Sexo, jpgBytes);
+                var novaPessoa = new Pessoa(request.Nome, request.Sobrenome, cpf, request.DataNascimento, request.Sexo, jpgBytes);
 
                 // Valida nova pessoa
                 var result = validator.Validate(novaPessoa);
@@ -99,7 +99,7 @@ namespace Montreal.Controllers
                 var pessoas = await context.Pessoas
                 .Where(p => (string.IsNullOrEmpty(nome) || p.Nome.Contains(nome)) &&
                             (string.IsNullOrEmpty(cpf) || p.CPF == cpf) &&
-                            (!dataNascimento.HasValue || p.DataNascimento == dataNascimento.Value) &&
+                            (!dataNascimento.HasValue || p.DataNascimento == DateOnly.FromDateTime(dataNascimento.Value)) &&
                             (string.IsNullOrEmpty(Sexo) || p.Sexo == Sexo))
                 .Select(pessoa => new PessoaDto(pessoa.Id, pessoa.Nome, pessoa.Sobrenome, pessoa.CPF, pessoa.DataNascimento, pessoa.Sexo))
                 .Skip((pageNumber - 1) * pageSize)
@@ -132,13 +132,18 @@ namespace Montreal.Controllers
             // Atualiza uma pessoa
             rotasPessoas.MapPut(pattern: "{id}", handler: async (Guid id, UpdatePessoaRequest request, AppDbContext context, CancellationToken ct, [FromServices] IValidator<Pessoa> validator) =>
             {
+                var cpf = request.CPF;
+
+                // Remove non-numeric caracteres
+                cpf = new string(cpf.Where(char.IsDigit).ToArray());
+
                 var pessoa = await context.Pessoas.SingleOrDefaultAsync(pessoa => pessoa.Id == id, ct);
                 HistoricoFoto novaFotoPrincipal = null;
 
                 if (pessoa == null)
                     return Results.NotFound();
 
-                pessoa.AtualizarPessoa(request.Nome, request.Sobrenome, request.CPF, request.DataNascimento, request.Sexo);
+                pessoa.AtualizarPessoa(request.Nome, request.Sobrenome, cpf, request.DataNascimento, request.Sexo);
 
                 // Verifica se há uma nova foto para atualizar
                 if (request.Foto != null && request.Foto.Length > 0)

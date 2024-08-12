@@ -129,6 +129,7 @@ C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.AssemblyInfo.cs
 C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.csproj.CoreCompileInputs.cache
 C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.MvcApplicationPartsAssemblyInfo.cs
 C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.MvcApplicationPartsAssemblyInfo.cache
+C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.sourcelink.json
 C:\Projetos\Montreal\obj\Debug\net8.0\staticwebassets.build.json
 C:\Projetos\Montreal\obj\Debug\net8.0\staticwebassets.development.json
 C:\Projetos\Montreal\obj\Debug\net8.0\staticwebassets\msbuild.Montreal.Microsoft.AspNetCore.StaticWebAssets.props
@@ -143,4 +144,3 @@ C:\Projetos\Montreal\obj\Debug\net8.0\refint\Montreal.dll
 C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.pdb
 C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.genruntimeconfig.cache
 C:\Projetos\Montreal\obj\Debug\net8.0\ref\Montreal.dll
-C:\Projetos\Montreal\obj\Debug\net8.0\Montreal.sourcelink.json
