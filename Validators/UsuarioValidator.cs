@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Montreal.Entities;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Montreal.Validators
 {
@@ -19,7 +20,6 @@ namespace Montreal.Validators
 
             RuleFor(c => c.Senha)
                 .NotEmpty()
-                .Length(8, 12)
                 .Matches(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,12}$")
                 .WithMessage("Senha deve possuir entre 8 e 12 caracteres e ter ao menos uma letra e um número");
         }
