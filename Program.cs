@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 
@@ -90,10 +91,6 @@ app.Use(async (context, next) =>
     }
 });
 
-app.UseAuthentication();
-app.UseAuthorization();
-
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -103,10 +100,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Configuração das Rotas
-app.AddRouteAuth();
+app.UseAuthentication();
 
-app.AddRoutesPessoas();
-app.AddRoutesUsuarios();
+app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();

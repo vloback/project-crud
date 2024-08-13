@@ -1,93 +1,105 @@
 ﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Montreal.Data;
 using Montreal.Entities;
 using Montreal.Entities.Dto;
+using Montreal.Migrations;
 using Montreal.Requests.Pessoas;
 using Montreal.Requests.Usuarios;
 using System.ComponentModel.DataAnnotations;
+using Usuario = Montreal.Entities.Usuario;
 
 namespace Montreal.Controllers
 {
-    public static class UsuariosController
+    [Route("api/[controller]")]
+    [ApiController]
+    public class UsuariosController : ControllerBase
     {
-        public static void AddRoutesUsuarios(this WebApplication app)
+        private readonly AppDbContext _context;
+        private readonly IValidator<Usuario> _validator;
+
+        public UsuariosController(AppDbContext context, IValidator<Usuario> validator)
         {
-            var rotasUsuarios = app.MapGroup(prefix: "usuarios").WithTags("Usuarios");
+            _context = context;
+            _validator = validator;
+        }
 
-            //Adiciona um novo usuario
+        [HttpGet]
+        [Authorize(Policy = "UsuarioPolicy")]
+        public async Task<IActionResult> BuscaTodosUsuarios(CancellationToken ct = default)
+        {
+            var usuarios = await _context.Usuarios
+               .Select(usuario => new UsuarioDto(usuario.Id, usuario.NomeUsuario, usuario.Role))
+               .ToListAsync(ct);
+            return Ok(usuarios);
+        }
 
-            rotasUsuarios.MapPost(pattern: "", handler: async (AddUsuarioRequest request, AppDbContext context, CancellationToken ct, [FromServices] IValidator<Usuario> validator) =>
+        [HttpPost]
+        [Authorize(Policy = "GerentePolicy")]
+        public async Task<IActionResult> AdicionaUsuario(AddUsuarioRequest request , CancellationToken ct = default)
+        {
+            var jaExiste = await _context.Usuarios.AnyAsync(usuario => usuario.NomeUsuario == request.NomeUsuario, ct);
+
+            if (jaExiste)
+                return Conflict(error: "Esse usuário já existe!");
+
+            var novoUsuario = new Usuario(request.NomeUsuario, request.Senha, request.Role);
+
+            var result = _validator.Validate(novoUsuario);
+
+            var error = result.Errors.Select(e => e.ErrorMessage);
+
+            if (!result.IsValid)
             {
-                var jaExiste = await context.Usuarios.AnyAsync(usuario => usuario.NomeUsuario == request.NomeUsuario, ct);
+                return Conflict(error);
+            }
 
-                if (jaExiste)
-                    return Results.Conflict(error: "Esse usuário já existe!");
+            await _context.Usuarios.AddAsync(novoUsuario, ct);
+            await _context.SaveChangesAsync(ct);
 
-                var novoUsuario = new Usuario(request.NomeUsuario, request.Senha, request.Role);
+            return Ok("Usuário adicionado com sucesso!");
+        }
 
-                var result = validator.Validate(novoUsuario);
+        [HttpPut("{usuarioId}")]
+        [Authorize(Policy = "GerentePolicy")]
+        public async Task<IActionResult> AlteraUsuario(Guid usuarioId, UpdateUsuarioRequest request, CancellationToken ct = default)
+        {
+            var usuario = await _context.Usuarios.SingleOrDefaultAsync(usuario => usuario.Id == usuarioId, ct);
 
-                var error = result.Errors.Select(e => e.ErrorMessage);
+            if (usuario == null)
+                return NotFound();
 
-                if (!result.IsValid)
-                {
-                    return Results.Conflict(error);
-                }
+            usuario.AtualizarUsuario(request.NomeUsuario, request.Senha, request.Role);
 
-                await context.Usuarios.AddAsync(novoUsuario, ct);
-                await context.SaveChangesAsync(ct);
+            var result = _validator.Validate(usuario);
 
-                return Results.Ok("Usuário adicionado com sucesso!");
-            }).RequireAuthorization("GerentePolicy");
+            var error = result.Errors.Select(e => e.ErrorMessage);
 
-            // Busca todos usuários
-            rotasUsuarios.MapGet(pattern: "", handler: async (AppDbContext context, CancellationToken ct) =>
+            if (!result.IsValid)
             {
-                var usuarios = await context.Usuarios
-                .Select(usuario => new UsuarioDto(usuario.Id, usuario.NomeUsuario, usuario.Role))
-                .ToListAsync(ct);
-                return usuarios;
-            }).RequireAuthorization("UsuarioPolicy");
+                return Conflict(error);
+            }
 
-            // Atualiza um usuário
-            rotasUsuarios.MapPut(pattern: "{id}", handler: async (Guid id, UpdateUsuarioRequest request, AppDbContext context, CancellationToken ct, [FromServices] IValidator<Usuario> validator) =>
-            {
-                var usuario = await context.Usuarios.SingleOrDefaultAsync(usuario => usuario.Id == id, ct);
+            await _context.SaveChangesAsync(ct);
+            return Ok("Usuário atualizado com sucesso!");
+        }
 
-                if (usuario == null)
-                    return Results.NotFound();
+        [HttpDelete("{usuarioId}")]
+        [Authorize(Policy = "GerentePolicy")]
+        public async Task<IActionResult> RemoveUsuario(Guid usuarioId, CancellationToken ct = default)
+        {
+            var usuario = await _context.Usuarios.SingleOrDefaultAsync(usuario => usuario.Id == usuarioId, ct);
 
-                usuario.AtualizarUsuario(request.NomeUsuario, request.Senha, request.Role);
+            if (usuario == null)
+                return NotFound();
 
-                var result = validator.Validate(usuario);
+            _context.Remove(usuario);
 
-                var error = result.Errors.Select(e => e.ErrorMessage);
-
-                if (!result.IsValid)
-                {
-                    return Results.Conflict(error);
-                }
-
-                await context.SaveChangesAsync(ct);
-                return Results.Ok("Usuário atualizado com sucesso!");
-            }).RequireAuthorization("GerentePolicy");
-
-            // Remove um usuário
-            rotasUsuarios.MapDelete(pattern: "{id}", handler: async (Guid id, AppDbContext context, CancellationToken ct) =>
-            {
-                var usuario = await context.Usuarios.SingleOrDefaultAsync(usuario => usuario.Id == id, ct);
-
-                if (usuario == null)
-                    return Results.NotFound();
-
-                context.Remove(usuario);
-
-                await context.SaveChangesAsync(ct);
-                return Results.Ok("Usuário removido com sucesso!");
-            }).RequireAuthorization("GerentePolicy");
+            await _context.SaveChangesAsync(ct);
+            return Ok("Usuário removido com sucesso!");
         }
     }
 }

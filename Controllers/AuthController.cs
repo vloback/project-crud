@@ -15,36 +15,41 @@ using System.Text;
 
 namespace Montreal.Controllers
 {
-    public static class AuthController
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
     {
-        public static void AddRouteAuth(this WebApplication app)
+        private readonly AppDbContext _context;
+
+        public AuthController(AppDbContext context)
         {
-            var rotaAuth = app.MapGroup(prefix: "login").WithTags("Autenticacao");
+            _context = context;
+        }
 
-            rotaAuth.MapPost(pattern: "", handler: async (CheckLoginRequest login, AppDbContext context, CancellationToken ct) =>
+        [HttpPost]
+        public async Task<IActionResult> Logar(CheckLoginRequest login , CancellationToken ct = default)
+        {
+            var usuario = await _context.Usuarios.SingleOrDefaultAsync(u => u.NomeUsuario == login.NomeUsuario && u.Senha == login.Senha, ct);
+
+            if (usuario == null)
+                return Conflict(error: "Usuário ou senha inválidos.");
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes("MySuperSecretKeyForJwt12345!@#$%");
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
-                var usuario = await context.Usuarios.SingleOrDefaultAsync(u => u.NomeUsuario == login.NomeUsuario && u.Senha == login.Senha, ct);
-
-                if (usuario == null)
-                    return Results.Conflict(error: "Usuário ou senha inválidos.");
-
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes("MySuperSecretKeyForJwt12345!@#$%");
-                var tokenDescriptor = new SecurityTokenDescriptor
+                Subject = new ClaimsIdentity(new Claim[]
                 {
-                    Subject = new ClaimsIdentity(new Claim[]
-                    {
                         new Claim(ClaimTypes.Name, usuario.NomeUsuario),
                         new Claim(ClaimTypes.Role, usuario.Role)
-                    }),
-                    Expires = DateTime.UtcNow.AddHours(1),
-                    Audience = "https://localhost:7223/",
-                    Issuer = "https://localhost:7223/",
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                };
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                return Results.Ok(new { token = tokenHandler.WriteToken(token) });
-            });
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                Audience = "https://localhost:7223/",
+                Issuer = "https://localhost:7223/",
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return Ok(new { token = tokenHandler.WriteToken(token) });
         }
     }
 }
